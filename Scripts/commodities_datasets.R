@@ -137,7 +137,8 @@
                   columns = c(difference))) %>% 
       tab_header(title = "Comparison of budgeted quantities of TLD90 across time",
                  subtitle = "TLD90 item quantities across the versions of the Commodities Dataset, FY20Q4-FY21Q4") %>% 
-  tab_source_note("source: Commodities datasets, downloaded from Panorama")
+  tab_source_note("source: Commodities datasets, downloaded from Panorama") %>% 
+      gtsave("item changes.png",path = "Dataout")
       
       
     #now budgets
@@ -178,7 +179,8 @@
                   columns = c(difference))) %>% 
       tab_header(title = "Comparison of budgeted $ amounts for TLD90 across time",
                  subtitle = "TLD90 budgeted totals(item+freight) across the versions of the Commodities Dataset, FY20Q4-FY21Q4") %>% 
-      tab_source_note("source: Commodities datasets, downloaded from Panorama")
+      tab_source_note("source: Commodities datasets, downloaded from Panorama") %>% 
+      gtsave("budget changes.png",path = "Dataout")
 # VIZ ============================================================================
 
   #  
