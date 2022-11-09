@@ -13,7 +13,7 @@ df_performance = df_artmis %>%
          ordered_quantity, 
          line_total, 
          fiscal_year_funding, 
-         d365_funding_source, 
+         d365_funding_source_detail, 
          d365_health_element,
          product_category,
          item_tracer_category,
@@ -61,7 +61,7 @@ pvp_join = function(planned, procured, mtch, cop_year, country_sel, category_sel
     filter(item_tracer_category == category_sel,
            cop == cop_year,
            country == country_sel,
-           #d365_funding_source %in% c("PEPFAR-COP-USAID","PEPFAR-Condom Fund"),
+           d365_funding_source_detail %in% c("PEPFAR-COP-USAID","PEPFAR-Condom Fund"),
            d365_health_element == "HIV/AIDS",
            task_order  == "TO1",
            order_type %in% c("Purchase Order","Distribution Order")) %>%
