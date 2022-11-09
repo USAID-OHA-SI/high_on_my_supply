@@ -27,10 +27,10 @@
       
   
   # Set paths  
-    data   <- "Data"
-    dataout <- "Dataout"
-    images  <- "Images"
-    graphs  <- "Graphics"
+    data   <- here("Data")
+    dataout <- here("Dataout")
+    images  <- here("Images")
+    graphs  <- here("Graphics")
    
     merdata <- glamr::si_path("path_msd")
     rasdata <- glamr::si_path("path_raster")
@@ -42,7 +42,7 @@
     
     perf_path <- "1h9SXDID1H2FSgWJffsfJbgi1Pyv1Em0L"
     commod_path <- "1YqA0VutptWYs1_cvNeSacb9I7I2a3ovg"
-    
+    match_path <-  "1bZateKAvx5j8Y5MYs3h27n9TqY0eVFiN"
 
     ##function to download performance dataset
     
@@ -55,9 +55,10 @@
         dplyr::pull(name)
       
       glamr::import_drivefile(drive_folder = perf_path,
-                              filename = filename,
+                              filename = perf_filename,
                               folderpath = data,
                               zip = FALSE)
+      return(perf_filename)
     }
     
     ##function to download commodities dataset
@@ -70,26 +71,60 @@
         dplyr::pull(name)
       
       glamr::import_drivefile(drive_folder = commod_path,
-                              filename = filename,
+                              filename = commod_filename,
                               folderpath = data,
                               zip = FALSE)
-      
+      return(commod_filename)
     }
       
+    # Read in matched dataset
+    
+    down_match <- function(match_path){
+      
+      file <- googledrive::drive_ls(googledrive::as_id(match_path))
+      
+      match_filename <- file %>% 
+        dplyr::filter(stringr::str_detect(name, pattern = "planned v procured")) %>%
+        dplyr::pull(name)
+      
+      glamr::import_drivefile(drive_folder = match_path,
+                              filename = match_filename,
+                              folderpath = data,
+                              zip = FALSE)
+      return(match_filename)
+    }
 
 # LOAD DATA ============================================================================  
 
-  #
-    perf_raw <- readxl::read_xlsx(file.path(data, filename))
+  perf_filename = down_performance(perf_path)
+  commod_filename = down_commod(commod_path)
+  match_filename = down_match(match_path)
     
-    commod_raw <- readr::read_tsv(file.path(data, commod_filename))
     
+  perf_raw <- readxl::read_xlsx(file.path(data, perf_filename))
     
-      
+  commod_raw <- readr::read_tsv(file.path(data, commod_filename))
+    
+  match_arv = readxl::read_xlsx(file.path(data, paste0(match_filename,".xlsx")), sheet = "Copy of adult arv comp") %>%
+    mutate(category = "Adult ARV")
+  match_arv[match_arv == "NA"]<-NA
+
+  match_ped = readxl::read_xlsx(file.path(data, paste0(match_filename,".xlsx")), sheet = "Copy of peds arv comp") %>%
+    mutate(category = "Pediatric ARV")
+  match_ped[match_ped == "NA"]<-NA
+  
+  match_vmmc = readxl::read_xlsx(file.path(data, paste0(match_filename,".xlsx")), sheet = "Copy of VMMC") %>%
+    mutate(category = "VMMC")
+  match_vmmc[match_vmmc == "NA"]<-NA
+  
+  matches = match_arv %>%
+    bind_rows(match_ped) %>%
+    bind_rows(match_vmmc)
+        
 # MUNGE ============================================================================
   
   #  performance dataset
-    df_artmis <- df_raw %>%
+    df_artmis <- perf_raw %>%
         janitor::clean_names() %>%
         filter(condom_adjusted_task_order == "TO1",
                fiscal_year_funding == "FY22",
@@ -115,11 +150,13 @@
       googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
                                  sheet = "lab reagent comp")
     
+    
   #commodities dataset
     
     
     df_commod <- commod_raw %>%
       filter(implementation_year == 2022)
+    
     
     
     #export list of items and categories for comparison
@@ -133,7 +170,7 @@
     #export list of lab reagents to an exsiting tab for editing
     
     df_commod %>%
-      filter(minor_category %in% c(""))
+      filter(minor_category %in% c("")) %>%
       distinct(major_category, minor_category, commodity_item) %>% 
       arrange(major_category, minor_category, commodity_item) %>% 
       googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
@@ -160,8 +197,3 @@
       prinf
     
   
-# VIZ ============================================================================
-
-  #  
-
-# SPINDOWN ============================================================================
