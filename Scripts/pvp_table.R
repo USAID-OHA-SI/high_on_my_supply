@@ -33,8 +33,10 @@ for(country_sel in unique(df_performance$country)){
     mutate(product_name = case_when(
       is.na(product_name) ~ match_name,
       !is.na(product_name) ~ product_name
-    )) %>%
-    select(product_name, ordered_quantity, line_total, item_quantity, total_cost, category)
+    )) %>% 
+    mutate(quantity_difference = item_quantity-ordered_quantity,
+           cost_difference = total_cost-line_total) %>%
+    select(product_name, ordered_quantity, item_quantity, quantity_difference, line_total, total_cost, cost_difference, category)
   
   # Tab Setup
   rowCounter = 1
@@ -53,14 +55,18 @@ for(country_sel in unique(df_performance$country)){
     # Columns
     setCellValue(cells[[rowCounter,1]], "Product Name")
     setCellValue(cells[[rowCounter,2]], "Planned Quantity")
-    setCellValue(cells[[rowCounter,3]], "Planned Cost")
+    setCellValue(cells[[rowCounter,3]], "Quantity Difference")
     setCellValue(cells[[rowCounter,4]], "Procured Quantity")
     setCellValue(cells[[rowCounter,5]], "Procured Cost")
+    setCellValue(cells[[rowCounter,6]], "Planned Cost")
+    setCellValue(cells[[rowCounter,7]], "Cost Difference")
     setCellStyle(cells[[rowCounter,1]], columnStyle)
     setCellStyle(cells[[rowCounter,2]], columnStyle)
     setCellStyle(cells[[rowCounter,3]], columnStyle)
     setCellStyle(cells[[rowCounter,4]], columnStyle)
     setCellStyle(cells[[rowCounter,5]], columnStyle)
+    setCellStyle(cells[[rowCounter,6]], columnStyle)
+    setCellStyle(cells[[rowCounter,7]], columnStyle)
     rowCounter = rowCounter + 1
     
     # Data
