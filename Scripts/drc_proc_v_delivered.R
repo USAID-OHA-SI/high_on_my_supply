@@ -53,6 +53,7 @@ drc_procured = df_arv_drc %>%
   filter(month >= as_datetime("2019-01-01")) %>%
   rename("Ordered Costs" = line_total,
          "Ordered Quantity" = ordered_quantity) %>%
+  mutate(month = zoo::as.yearmon(month)) %>%
   pivot_longer(cols = c("Ordered Quantity", "Ordered Costs"), names_to = "Category", values_to = "Value") %>%
   pivot_wider(id_cols = c("product_name", "Category"), names_from = "month", values_from = "Value")
   
@@ -70,6 +71,7 @@ drc_delivered = df_arv_drc %>%
            month < as_datetime("2022-12-14")) %>%
   rename("Delivered Value" = delivery_value,
          "Delivered Quantity" = shipped_quantity) %>%
+  mutate(month = zoo::as.yearmon(month)) %>%
   pivot_longer(cols = c("Delivered Quantity", "Delivered Value"), names_to = "Category", values_to = "Value") %>%
   pivot_wider(id_cols = c("product_name", "Category"), names_from = "month", values_from = "Value")
 
