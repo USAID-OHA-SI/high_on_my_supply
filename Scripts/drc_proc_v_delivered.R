@@ -55,11 +55,11 @@ get_perf <- function(path = data){
                           zip = F)
 }
   
-
+get_perf()
 
 #### LOAD DATA ============================================================================ 
 
-perf_raw <- readxl::read_xlsx("Data/Performance Dataset_12.14.22.xlsx")
+perf_raw <- readxl::read_xlsx(paste0(data,"/Performance Dataset_12.14.22.xlsx"))
 
 
 #  performance dataset
