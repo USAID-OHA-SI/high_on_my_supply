@@ -43,6 +43,7 @@
     perf_path <- "1h9SXDID1H2FSgWJffsfJbgi1Pyv1Em0L"
     commod_path <- "1YqA0VutptWYs1_cvNeSacb9I7I2a3ovg"
     match_path <-  "1bZateKAvx5j8Y5MYs3h27n9TqY0eVFiN"
+    rtk_path <- "1GNl2b046QBPBxw0o4z1YpKz54uCcYl4w"
 
     ##function to download performance dataset
     
@@ -93,12 +94,28 @@
                               zip = FALSE)
       return(match_filename)
     }
+    
+    down_rtk <- function(rtk_path){
+      
+      file <- googledrive::drive_ls(googledrive::as_id(rtk_path))
+      
+      rtk_filename <- file %>% 
+        dplyr::filter(stringr::str_detect(name, pattern = "xlsx")) %>%
+        dplyr::pull(name)
+      
+      glamr::import_drivefile(drive_folder = rtk_path,
+                              filename = rtk_filename[1],
+                              folderpath = data,
+                              zip = FALSE)
+      return(rtk_filename[1])
+    }
 
 # LOAD DATA ============================================================================  
 
   perf_filename = down_performance(perf_path)
   commod_filename = down_commod(commod_path)
   match_filename = down_match(match_path)
+  rtk_filename = down_rtk(rtk_path)
     
     
   perf_raw <- readxl::read_xlsx(file.path(data, perf_filename))
@@ -120,6 +137,8 @@
   matches = match_arv %>%
     bind_rows(match_ped) %>%
     bind_rows(match_vmmc)
+  
+  rtk_raw = readxl::read_xlsx(file.path(data, rtk_filename), sheet = )
         
 # MUNGE ============================================================================
   
