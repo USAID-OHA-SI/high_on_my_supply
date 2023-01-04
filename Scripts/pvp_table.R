@@ -34,9 +34,9 @@ pvp_table = function(df_pvp, categories, filepath) {
     df_local = df_pvp %>%
       filter(country == country_sel,!is.na(line_total) |
                !is.na(total_cost)) %>%
-      mutate(product_name = case_when(
-        is.na(product_name) ~ match_name,!is.na(product_name) ~ product_name
-      )) %>%
+      # mutate(product_name = case_when(
+      #   is.na(product_name) ~ match_name,!is.na(product_name) ~ product_name
+      # )) %>%
       mutate(
         quantity_difference = item_quantity - ordered_quantity,
         cost_difference = total_cost - line_total
@@ -56,10 +56,20 @@ pvp_table = function(df_pvp, categories, filepath) {
       group_by(category) %>%
       summarize(ordered_quantity = sum(ordered_quantity, na.rm = T),
                 item_quantity = sum(item_quantity, na.rm = T),
-                quantity_difference = sum(quantity_difference, na.rm = T),
                 line_total = sum(line_total, na.rm = T),
-                total_cost = sum(total_cost, na.rm = T),
-                cost_difference = sum(cost_difference, na.rm = T))
+                total_cost = sum(total_cost, na.rm = T)) %>%
+      mutate(
+        quantity_difference = item_quantity - ordered_quantity,
+        cost_difference = total_cost - line_total
+      ) %>%
+        select(
+          ordered_quantity,
+          item_quantity,
+          quantity_difference,
+          line_total,
+          total_cost,
+          cost_difference,
+          category)
     
     
     df_local = df_local %>%

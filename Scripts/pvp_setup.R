@@ -134,12 +134,42 @@
     mutate(category = "VMMC")
   match_vmmc[match_vmmc == "NA"]<-NA
   
+  match_test = readxl::read_xlsx(file.path(data, paste0(match_filename,".xlsx")), sheet = "Copy of Testing") %>%
+    mutate(category = "RTK")
+  match_test[match_test == "NA"]<-NA
+  
+  match_tb = readxl::read_xlsx(file.path(data, paste0(match_filename,".xlsx")), sheet = "Copy of Tuburculosis") %>%
+    mutate(category = "TB")
+  match_tb[match_tb == "NA"]<-NA
+  
+  match_condoms = readxl::read_xlsx(file.path(data, paste0(match_filename,".xlsx")), sheet = "Condoms") %>%
+    mutate(category = "Condoms")
+  match_condoms[match_condoms == "NA"]<-NA
+  
   matches = match_arv %>%
     bind_rows(match_ped) %>%
-    bind_rows(match_vmmc)
+    bind_rows(match_vmmc) %>%
+    bind_rows(match_test) %>%
+    bind_rows(match_tb)
   
-  rtk_raw = readxl::read_xlsx(file.path(data, rtk_filename), sheet = )
-        
+  rtk_raw = readxl::read_xlsx(file.path(data, rtk_filename), sheet = "GHSCTransactionStatusallTransa") %>%
+    select(ordered_quantity = `Quantity (kits)`,
+           line_total = `Grand Total incl CR`,
+           fiscal_year_funding = COP,
+           Class,
+           country = `Ship-To Country`,
+           product_name = Description) %>%
+    mutate(cop = as.numeric(str_extract(fiscal_year_funding, "\\d{1,}"))+2000) %>%
+    filter(Class == "Products") %>%
+    mutate(item_tracer_category = "RTK",
+           d365_funding_source_detail = "PEPFAR-COP-USAID",
+           d365_health_element = "HIV/AIDS",
+           task_order  = "TO1",
+           order_type = "Purchase Order") 
+  rtk_raw$country[rtk_raw$country=="Cote D'Ivoire"]<-"Cote d'Ivoire"
+  rtk_raw$country[rtk_raw$country=="Congo, DRC"]<-"DRC"
+  
+       
 # MUNGE ============================================================================
   
   #  performance dataset
@@ -152,24 +182,24 @@
                                    country == "Congo DRC" ~ "DRC",
                                    country == "Eswatini" ~ "eSwatini",
                                    TRUE ~ country))
-    
-    #export list of items and categories for comparison
-    
-    df_artmis %>% 
-    distinct(item_tracer_category, product_category, product_name) %>% 
-      arrange(item_tracer_category, product_category, product_name) %>% 
-      googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
-                                 sheet = "perf dataset cats")
-    
-    #export lab-specific reagent tabs to a NEW tab
-    df_artmis %>%
-      filter(product_category == "Laboratory Reagents") %>% 
-      distinct(item_tracer_category, product_category, product_name) %>% 
-      arrange(item_tracer_category, product_category, product_name) %>% 
-      googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
-                                 sheet = "lab reagent comp")
-    
-    
+    # 
+    # #export list of items and categories for comparison
+    # 
+    # df_artmis %>% 
+    # distinct(item_tracer_category, product_category, product_name) %>% 
+    #   arrange(item_tracer_category, product_category, product_name) %>% 
+    #   googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
+    #                              sheet = "perf dataset cats")
+    # 
+    # #export lab-specific reagent tabs to a NEW tab
+    # df_artmis %>%
+    #   filter(product_category == "Laboratory Reagents") %>% 
+    #   distinct(item_tracer_category, product_category, product_name) %>% 
+    #   arrange(item_tracer_category, product_category, product_name) %>% 
+    #   googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
+    #                              sheet = "lab reagent comp")
+    # 
+    # 
   #commodities dataset
     
     
@@ -177,42 +207,42 @@
       filter(implementation_year == 2022)
     
     
-    
-    #export list of items and categories for comparison
-    
-    df_commod %>% 
-      distinct(major_category, minor_category, commodity_item) %>% 
-      arrange(major_category, minor_category, commodity_item) %>% 
-      googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
-                                 sheet = "commodities cats")
-    
-    #export list of lab reagents to an exsiting tab for editing
-    
-    df_commod %>%
-      filter(minor_category %in% c("")) %>%
-      distinct(major_category, minor_category, commodity_item) %>% 
-      arrange(major_category, minor_category, commodity_item) %>% 
-      googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
-                                 sheet = "commodities cats")
-    
-    
-    
-    ###scratch
-    #compare minor category from commod to product_category from perf
-    
-    df_artmis %>% 
-      filter(item_tracer_category == "Laboratory") %>% 
-      distinct(product_category) %>% prinf
-    #operative category Laboratory Reagents
-    
-    df_commod %>% 
-      filter(major_category == "Laboratory") %>% 
-      distinct(minor_category)
-    
-    commod_raw %>% filter(major_category == "Laboratory" & minor_category == "VL Reagents And Consumables",
-                          implementation_year == 2021) %>%
-      distinct(commodity_item) %>%
-      arrange(commodity_item) %>%
-      prinf
+    # 
+    # #export list of items and categories for comparison
+    # 
+    # df_commod %>% 
+    #   distinct(major_category, minor_category, commodity_item) %>% 
+    #   arrange(major_category, minor_category, commodity_item) %>% 
+    #   googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
+    #                              sheet = "commodities cats")
+    # 
+    # #export list of lab reagents to an existing tab for editing
+    # 
+    # df_commod %>%
+    #   filter(minor_category %in% c("")) %>%
+    #   distinct(major_category, minor_category, commodity_item) %>% 
+    #   arrange(major_category, minor_category, commodity_item) %>% 
+    #   googlesheets4::write_sheet(ss = googledrive::as_id("1BiYqRkYb9iGRGZVuMtUIeQ0mj2G7fgLMnX83MQf3KqA"),
+    #                              sheet = "commodities cats")
+    # 
+    # 
+    # 
+    # ###scratch
+    # #compare minor category from commod to product_category from perf
+    # 
+    # df_artmis %>% 
+    #   filter(item_tracer_category == "Laboratory") %>% 
+    #   distinct(product_category) %>% prinf
+    # #operative category Laboratory Reagents
+    # 
+    # df_commod %>% 
+    #   filter(major_category == "Laboratory") %>% 
+    #   distinct(minor_category)
+    # 
+    # commod_raw %>% filter(major_category == "Laboratory" & minor_category == "VL Reagents And Consumables",
+    #                       implementation_year == 2021) %>%
+    #   distinct(commodity_item) %>%
+    #   arrange(commodity_item) %>%
+    #   prinf
     
   
