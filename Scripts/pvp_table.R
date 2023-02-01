@@ -12,7 +12,7 @@ require(xlsx)
 #### Tabular Presentation ============================================================================
 filepath = here("Dataout", "plannedVsProcured.xlsx")
 
-pvp_table = function(df_pvp, categories, filepath) {
+pvp_table = function(df_pvp, categories, cop, filepath) {
   # Initialize Workbook
   wb = xlsx::createWorkbook()
   
@@ -28,8 +28,10 @@ pvp_table = function(df_pvp, categories, filepath) {
     Alignment(h = "ALIGN_RIGHT") +
     Font(wb, color = "#FF0000")
   
+  sumHolster = data.frame()
+  
   # Loop though countries
-  for (country_sel in unique(df_pvp$country)) {
+  for (country_sel in sort(unique(df_pvp$country))) {
     # Limit to Country
     df_local = df_pvp %>%
       filter(country == country_sel,!is.na(line_total) |
@@ -52,6 +54,7 @@ pvp_table = function(df_pvp, categories, filepath) {
         category
       )
     
+    
     df_sum = df_local %>%
       group_by(category) %>%
       summarize(ordered_quantity = sum(ordered_quantity, na.rm = T),
@@ -71,6 +74,20 @@ pvp_table = function(df_pvp, categories, filepath) {
           cost_difference,
           category)
     
+    temp = df_sum %>%
+      mutate(country = country_sel) %>%
+      select(Country = country, 
+             Category = category,
+             `Planned Quantity` = ordered_quantity,
+             `Procured Quantity` = item_quantity,
+             `Quantity Difference` = quantity_difference,
+             `Planned Cost` = line_total,
+             `Procured Cost` = total_cost,
+             `Cost Difference` = cost_difference)
+    
+    sumHolster = sumHolster %>%
+      bind_rows(temp)
+    
     
     df_local = df_local %>%
       mutate(ordered_quantity = prettyNum(round(ordered_quantity, digits = 0), big.mark = ","),
@@ -88,12 +105,21 @@ pvp_table = function(df_pvp, categories, filepath) {
     rows <- createRow(sheet, 1:100)
     cells <- createCell(rows, colIndex = 1:12)
     
+    setCellValue(cells[[rowCounter, 1]], paste0("Data from ARTMIS database [Jan 17, 2023], Panorama.com FAST database [Sept 16, 2022], and GHSC-RTK [Jan 3, 2023]"))
+    
+    rowCounter = rowCounter + 1
+    
+    setCellValue(cells[[rowCounter, 1]], paste0("COP ", cop))
+    
+    rowCounter = rowCounter + 2
+    
     # Loop through Categories
     for (category_sel in categories) {
       
       df_cat = df_local %>%
         filter(category == category_sel) %>%
-        select(-category)
+        select(-category) %>%
+        arrange(desc(product_name))
       
       df_sum_cat = df_sum %>%
         filter(category == category_sel) %>%
@@ -159,8 +185,30 @@ pvp_table = function(df_pvp, categories, filepath) {
     }
   }
   
+  # Tab Setup
+  sheet = xlsx::createSheet(wb, sheetName = "Summary")
+  rows <- createRow(sheet, 1:100)
+  cells <- createCell(rows, colIndex = 1:12)
+  
+  sumHolster = sumHolster %>%
+    mutate(`Planned Quantity` = prettyNum(round(`Planned Quantity`, digits = 0), big.mark = ","),
+         `Procured Quantity` = prettyNum(round(`Procured Quantity`, digits = 0), big.mark = ","),
+         `Quantity Difference` = prettyNum(round(`Quantity Difference`, digits = 0), big.mark = ","),
+         `Planned Cost` = paste0("$",prettyNum(round(`Planned Cost`, digits = 0), big.mark = ",")),
+         `Procured Cost` = paste0("$",prettyNum(round(`Procured Cost`, digits = 0), big.mark = ",")),
+         `Cost Difference` = paste0("$",prettyNum(round(`Cost Difference`, digits = 0), big.mark = ",")))
+  
+  addDataFrame(
+    sumHolster,
+    sheet,
+    col.names = T,
+    row.names = F,
+    startRow = 1,
+    colStyle = dataStyle
+  )
+  
   # Save
   saveWorkbook(wb, filepath)
 }
 
-pvp_table(df_pvp, categories, filepath)
+pvp_table(df_pvp, categories, cop = 2021, filepath)

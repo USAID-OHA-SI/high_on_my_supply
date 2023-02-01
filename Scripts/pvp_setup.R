@@ -154,12 +154,13 @@
   
   rtk_raw = readxl::read_xlsx(file.path(data, rtk_filename), sheet = "GHSCTransactionStatusallTransa") %>%
     select(ordered_quantity = `Quantity (kits)`,
-           line_total = `Grand Total incl CR`,
+           cost = CPT,
            fiscal_year_funding = COP,
            Class,
            country = `Ship-To Country`,
            product_name = Description) %>%
-    mutate(cop = as.numeric(str_extract(fiscal_year_funding, "\\d{1,}"))+2000) %>%
+    mutate(cop = as.numeric(str_extract(fiscal_year_funding, "\\d{1,}"))+2000,
+           line_total = ordered_quantity*cost) %>%
     filter(Class == "Products") %>%
     mutate(item_tracer_category = "RTK",
            d365_funding_source_detail = "PEPFAR-COP-USAID",
