@@ -20,7 +20,8 @@ df_performance = df_artmis %>%
          country,
          product_name,
          task_order,
-         order_type) %>%
+         order_type,
+         base_unit_multiplier) %>%
   mutate(cop = (as.numeric(str_extract(fiscal_year_funding, "\\d{1,}"))-1)+2000) %>%
   mutate(product_name = case_when(
     str_detect(product_name, "Shang Ring Device") ~ "VMMC Device Shang Ring, pack of 200 devices per size",
@@ -31,6 +32,8 @@ df_performance = df_artmis %>%
     TRUE ~ item_tracer_category
   )) %>%
   bind_rows(rtk_raw)
+
+df_performance$country[df_performance$country=="DRC"]<-"Democratic Republic of the Congo"
 
 # Creating df_commodity with the variables I care about
 df_commodity = df_commod %>%

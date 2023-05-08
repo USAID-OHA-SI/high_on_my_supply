@@ -177,8 +177,9 @@
     df_artmis <- perf_raw %>%
         janitor::clean_names() %>%
         filter(condom_adjusted_task_order == "TO1",
-               fiscal_year_funding == "FY22",
-               order_type %in% c("Purchase Order", "Distribution Order")) %>% 
+               #fiscal_year_funding == "FY22",
+               #order_type %in% c("Purchase Order", "Distribution Order")
+               ) %>% 
         mutate(country = case_when(country == "Côte d'Ivoire" ~ "Cote d'Ivoire",
                                    country == "Congo DRC" ~ "DRC",
                                    country == "Eswatini" ~ "eSwatini",
